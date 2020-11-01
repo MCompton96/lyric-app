@@ -9,31 +9,35 @@ import * as util from './utils';
 class App extends React.Component {
   
   state = {
-    artist: '',
+    artist: 'coldplay',
     lyrics: [],
     lyricsAverage: 0,
+    lyricsMax: 0,
+    lyricsMin: 0,
     isLoading: true,
-    submitted: false
+    isSubmitted: false
   }
   
-  componentDidMount() {
+  getData = () => {
     songApi.getReleases(this.state.artist)
-    .then(({ data }) => {
-      return data.releases.map((song) => {
-        return lyricsApi.getLyrics(this.state.artist, song.title)
         .then(({ data }) => {
-          this.setState((currState) => {
-            if (data.lyrics) {
-              return { lyrics: [...currState.lyrics, util.formatLyrics(data.lyrics)], isLoading: false}
-            }
+          return data.releases.map((song) => {
+            return lyricsApi.getLyrics(this.state.artist, song.title)
+            .then(({ data }) => {
+              this.setState((currState) => {
+                if (data.lyrics) {
+                  return { lyrics: [...currState.lyrics, util.formatLyrics(data.lyrics)], isLoading: false}
+                }
+              })
+            })
+            .then(() => {
+              const average = util.getAverage(this.state.lyrics);
+              const max = util.getMax(this.state.lyrics);
+              const min = util.getMin(this.state.lyrics);
+              this.setState({ lyricsAverage: average, lyricsMax: max, lyricsMin: min, isLoading: false})
+            })
           })
         })
-        .then(() => {
-          const average = util.getAverage(this.state.lyrics);
-          this.setState({ lyricsAverage: average, isLoading: false})
-        })
-      })
-    })
   }
 
   handleChange = (event) => {
@@ -41,28 +45,40 @@ class App extends React.Component {
       this.setState({ artist: value})
   }
 
-  handleClick = (event) => {
+  handleSubmit = (event) => {
     event.preventDefault();
-    this.setState({ submitted: true })
+    this.setState({ isSubmitted: true})
+  }
+
+  componentDidMount() {
+    this.getData();
+  }
+
+  componentDidUpdate(prevState, prevProps) {
+    if (prevState.artist !== this.state.artist) {
+      this.getData();
+    }
   }
 
   render() {
-    const { isLoading, lyricsAverage, submitted } = this.state;
+    const { isLoading, lyricsAverage, lyricsMax, lyricsMin, isSubmitted} = this.state;
     
     return (
-      <div>
-        {isLoading ? <p>Page is Loading</p> : (
-          <>
-          <form>
+      <div className="App">
+          <form onSubmit={this.handleSubmit}>
             <label>
               <span>Music Artist:&nbsp;</span>
               <input onChange={this.handleChange}/>
-              <button onClick={this.handleClick}>Submit</button>
+              <button>Submit</button>
             </label>
           </form>
-        <p>Average: {submitted ? <span>{lyricsAverage.toFixed(2)}</span> : <span>0</span>}</p>
-          </>
-        )}
+    {isSubmitted ? (isLoading ? <p>Data is Loading...</p> : 
+    <>
+    <p>Average Word Count: {lyricsAverage.toFixed(2)}</p>
+    <p>Min Song Length: {lyricsMin} words</p>
+    <p>Max Song Length: {lyricsMax} words</p>
+    </>
+    ) : null}
       </div>
     )
   }

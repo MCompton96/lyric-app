@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    justify-content: center;
+    height: 20vh;
+    border-bottom: 6px solid goldenrod;
+    background-color: black;
+}
+
+.header {
+    margin-top: 40px;
+    font-weight: 900;
+    font-size: 4rem;
+    color: white;
+}
+

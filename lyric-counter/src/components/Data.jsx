@@ -3,7 +3,6 @@ import * as songApi from '../API/songsApi';
 import * as lyricsApi  from '../API/lyricsApi';
 import * as util from '../utils';
 import Loader from './Loader';
-import ErrorHandling from './ErrorHandling';
 import styles from './Data.module.css';
 
 class Data extends React.Component {
@@ -13,34 +12,39 @@ class Data extends React.Component {
         lyricsMin: 0,
         lyrics: [],
         isLoading: true,
-        err: null
     }
     
-
-
     // getData = () => {
+    //   const regex = /\([^)]*\)/
     //   songApi.getReleases(this.props.artist)
-    //   .then(({ data }) => {
-    //     return Promise.allSettled(data.releases.map(song => {
-    //       return lyricsApi.getLyrics(this.props.artist, song.title)
+    //   .then(async ({ data }) => {
+    //     return  await Promise.allSettled(data.recordings.map(song => {
+    //       let formattedSongTitle = song.title.replace(regex, '');
+    //       return lyricsApi.getLyrics(this.props.artist, formattedSongTitle)
     //     }))
     //   })
     //   .then ((res) => {
-    //     this.setState({ lyrics: util.formatLyrics(res), isLoading: false})
-    //   })
-    //   .then(() => {
-    //     this.setState({ isLoading: true })
-    //     const average = util.getAverage(this.state.lyrics);
-    //     const max = util.getMax(this.state.lyrics);
-    //     const min = util.getMin(this.state.lyrics);
-    //     this.setState({ lyricsAverage: average, lyricsMax: max, lyricsMin: min, isLoading: false})
+    //     const lyrics = util.formatLyrics(res);
+    //     const average = util.getAverage(lyrics);
+    //     const max = util.getMax(lyrics);
+    //     const min = util.getMin(lyrics);
+    //     this.setState({ 
+    //       lyrics: util.formatLyrics(res), 
+    //       isLoading: false,
+    //       lyricsAverage: average,
+    //       lyricsMax: max,
+    //       lyricsMin: min
+    //     })
     //   })
     // }
+
   getData = () => {
+      const regex = /\([^)]*\)/
       songApi.getReleases(this.props.artist)
           .then(({ data }) => {
-            return data.releases.map((song) => {
-              return lyricsApi.getLyrics(this.props.artist, song.title)
+            return data.recordings.map((song) => {
+              let formattedSongTitle = song.title.replace(regex, '');
+              return lyricsApi.getLyrics(this.props.artist, formattedSongTitle)
               .then(({ data }) => {
                 this.setState((currState) => {
                   if (data.lyrics) {
@@ -72,19 +76,18 @@ class Data extends React.Component {
       }
 
     render() {
-        const { lyricsAverage, lyricsMax, lyricsMin, isLoading, err} = this.state;
+        const { lyricsAverage, lyricsMax, lyricsMin, isLoading} = this.state;
         const { handleReset} = this.props;
     return(
         <div className={styles.container}>
             {isLoading ? <Loader /> : 
                 <>
-                {err === null ? null : (
-                  <ErrorHandling msg={err.data.msg} status={err.status}/>
-                )}
+                <div className={styles.data}>
                 <p>Average Word Count: {lyricsAverage.toFixed(2)}</p>
                 <p>Min Song Length: {lyricsMin} words</p>
                 <p>Max Song Length: {lyricsMax} words</p>
-                <button onClick={handleReset}>Reset Data</button>
+                </div>
+                <button onClick={handleReset} className={styles.button}>Reset Data</button>
                 </>
             }
         </div>
